@@ -29,7 +29,7 @@ public class PlayerMovement2D : MonoBehaviour
 	{
 		isGrounded = Physics2D.OverlapCircle(groundCheck.position, checkRadius, groundLayer);
 		moveInput = Input.GetAxis("Horizontal");
-		rb.velocity = new Vector2(moveInput * speed, rb.velocity.y);
+		rb.linearVelocity = new Vector2(moveInput * speed, rb.linearVelocity.y);
 		Vector3 localScale = base.transform.localScale;
 		if (moveInput > 0f)
 		{
@@ -43,7 +43,7 @@ public class PlayerMovement2D : MonoBehaviour
 		}
 		if (Input.GetButtonDown("Jump") && isGrounded)
 		{
-			rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+			rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
 		}
 	}
 

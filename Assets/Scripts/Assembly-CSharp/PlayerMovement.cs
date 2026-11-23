@@ -58,7 +58,7 @@ public class PlayerMovement : MonoBehaviour
 		inputX = Input.GetAxis("Horizontal");
 		if (Input.GetButtonDown("Jump") && IsGrounded())
 		{
-			rb.velocity = new Vector2(rb.velocity.x, jumpForce);
+			rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
 			if (debugLogs)
 			{
 				Debug.Log("PlayerMovement: Jump");
@@ -70,8 +70,8 @@ public class PlayerMovement : MonoBehaviour
 	{
 		float num = inputX * moveSpeed;
 		float smoothTime = (IsGrounded() ? smoothTimeGround : smoothTimeAir);
-		float num2 = Mathf.SmoothDamp(rb.velocity.x, num, ref velXSmoothing, smoothTime);
-		rb.velocity = new Vector2(num2, rb.velocity.y);
+		float num2 = Mathf.SmoothDamp(rb.linearVelocity.x, num, ref velXSmoothing, smoothTime);
+		rb.linearVelocity = new Vector2(num2, rb.linearVelocity.y);
 		if (debugLogs)
 		{
 			Debug.Log($"FixedUpdate: inputX={inputX:F2} targetVelX={num:F2} newVelX={num2:F2}");
