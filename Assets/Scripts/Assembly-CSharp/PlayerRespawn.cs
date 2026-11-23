@@ -1,25 +1,89 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PlayerRespawn : MonoBehaviour
 {
-	private void OnTriggerEnter2D(Collider2D other)
-	{
-		Debug.Log(">>> ТРИГЕР! Я зайшов у: " + other.gameObject.name + " | Тег: " + other.tag);
-		if (other.CompareTag("Spike"))
-		{
-			Debug.Log("Смерть від тригера!");
-			SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-		}
-	}
+    [Header("Час невразливості після отримання шкоди (сек)")]
+    public float invulnerabilityTime = 1.5f;
 
-	private void OnCollisionEnter2D(Collision2D collision)
-	{
-		Debug.Log(">>> УДАР! Я вдарився об: " + collision.gameObject.name + " | Тег: " + collision.gameObject.tag);
-		if (collision.gameObject.CompareTag("Spike"))
-		{
-			Debug.Log("Смерть від удару!");
-			SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-		}
-	}
+    private bool isInvulnerable = false;
+    private SpriteRenderer spriteRenderer;
+
+    private void Start()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Spike"))
+        {
+            TakeDamage();
+        }
+    }
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (other.CompareTag("Spike"))
+        {
+            TakeDamage();
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Spike"))
+        {
+            TakeDamage();
+        }
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Spike"))
+        {
+            TakeDamage();
+        }
+    }
+
+    private void TakeDamage()
+    {
+        if (isInvulnerable) return;
+
+        HealthBar.LoseHeart(1);
+
+        if (HealthBar.currentHearts <= 0)
+        {
+            HealthBar.ResetHearts();
+            SceneManager.LoadScene("New Scene");
+        }
+        else
+        {
+            StartCoroutine(InvulnerabilityRoutine());
+        }
+    }
+
+    private IEnumerator InvulnerabilityRoutine()
+    {
+        isInvulnerable = true;
+
+        float elapsed = 0f;
+        while (elapsed < invulnerabilityTime)
+        {
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.enabled = !spriteRenderer.enabled;
+            }
+            yield return new WaitForSeconds(0.15f);
+            elapsed += 0.15f;
+        }
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.enabled = true;
+        }
+
+        isInvulnerable = false;
+    }
 }
