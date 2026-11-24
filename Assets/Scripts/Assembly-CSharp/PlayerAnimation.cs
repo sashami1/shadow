@@ -21,7 +21,7 @@ public class PlayerAnimation : MonoBehaviour
 		if (!(anim == null) && !(rb == null))
 		{
 			anim.SetFloat("Speed", Mathf.Abs(rb.linearVelocity.x));
-			bool value = Mathf.Abs(rb.linearVelocity.y) > 0.1f;
+			bool value = Mathf.Abs(rb.linearVelocity.y) > 2.0f;
 			anim.SetBool("IsJumping", value);
 		}
 	}

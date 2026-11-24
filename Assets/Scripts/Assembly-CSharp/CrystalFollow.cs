@@ -1,67 +1,120 @@
 using UnityEngine;
+using System.Collections;
 
 public class CrystalFollow : MonoBehaviour
 {
-	public Vector3 headOffset = new Vector3(0f, 0.5f, 0f);
+    [Header("Налаштування польоту кристала")]
+    public Vector3 headOffset = new Vector3(0f, 0.5f, 0f);
 
-	private Transform playerHead;
+    [Header("Налаштування підказки")]
+    public GameObject heavyWarningText;
+    public float warningShowTime = 2.5f;
 
-	private bool isFollowing;
+    public static bool isAnyCrystalFollowing = false;
+    private static float lastPickupTime = -10f;
 
-	private bool isPlaced;
+    private Transform playerHead;
+    private bool isFollowing;
+    private bool isPlaced;
+    private string glowEffectName = "GlowEffect";
+    private Coroutine hideWarningCoroutine;
 
-	private string glowEffectName = "GlowEffect";
+    private void Start()
+    {
+        if (!isFollowing && !isPlaced)
+        {
+            isAnyCrystalFollowing = false;
+        }
 
-	private void OnTriggerEnter2D(Collider2D collision)
-	{
-		if (collision.CompareTag("Player") && !isFollowing && !isPlaced)
-		{
-			playerHead = collision.transform.Find("HeadPoint");
-			if (playerHead != null)
-			{
-				isFollowing = true;
-				GetComponent<Collider2D>().isTrigger = true;
-				Rigidbody2D component = GetComponent<Rigidbody2D>();
-				if (component != null)
-				{
-					component.isKinematic = true;
-				}
-			}
-		}
-		if (collision.CompareTag("Socket") && isFollowing)
-		{
-			PlaceInSocket(collision.transform);
-		}
-	}
+        if (heavyWarningText != null)
+        {
+            heavyWarningText.SetActive(false);
+        }
+    }
 
-	private void Update()
-	{
-		if (isFollowing && playerHead != null)
-		{
-			base.transform.position = playerHead.position + headOffset;
-		}
-	}
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        // 1. Взаємодія з гравцем
+        if (collision.CompareTag("Player"))
+        {
+            // Беремо перший кристал
+            if (!isFollowing && !isPlaced && !isAnyCrystalFollowing)
+            {
+                playerHead = collision.transform.Find("HeadPoint");
+                if (playerHead != null)
+                {
+                    isFollowing = true;
+                    isAnyCrystalFollowing = true;
+                    lastPickupTime = Time.time;
 
-	private void PlaceInSocket(Transform socketTransform)
-	{
-		isFollowing = false;
-		isPlaced = true;
-		base.transform.position = socketTransform.position;
-		Transform transform = socketTransform.Find(glowEffectName);
-		if (transform != null)
-		{
-			transform.gameObject.SetActive(value: true);
-		}
-		else
-		{
-			Debug.LogWarning("У формочці '" + socketTransform.name + "' не знайдено об'єкт 'GlowEffect'!");
-		}
-		socketTransform.GetComponent<Collider2D>().enabled = false;
-		LevelManager levelManager = Object.FindObjectOfType<LevelManager>();
-		if (levelManager != null)
-		{
-			levelManager.AddCrystal();
-		}
-		Debug.Log("Кристал встановлено!");
-	}
+                    // Колайдер залишаємо УВІМКНЕНИМ як тригер, щоб він міг торкнутися формочки (Socket)!
+                    GetComponent<Collider2D>().isTrigger = true;
+                    Rigidbody2D rb = GetComponent<Rigidbody2D>();
+                    if (rb != null)
+                    {
+                        rb.isKinematic = true;
+                    }
+                }
+            }
+            // Підійшли до іншого кристала, коли вже тримаємо один
+            else if (!isFollowing && !isPlaced && isAnyCrystalFollowing && (Time.time - lastPickupTime > 0.3f))
+            {
+                ShowHeavyWarning();
+            }
+        }
+
+        // 2. Взаємодія з формочкою (Socket) — повертаємо вставку кристала!
+        if (collision.CompareTag("Socket") && isFollowing)
+        {
+            PlaceInSocket(collision.transform);
+        }
+    }
+
+    private void Update()
+    {
+        if (isFollowing && playerHead != null)
+        {
+            transform.position = playerHead.position + headOffset;
+        }
+    }
+
+    public void PlaceInSocket(Transform socketTransform)
+    {
+        isFollowing = false;
+        isPlaced = true;
+        isAnyCrystalFollowing = false;
+
+        transform.position = socketTransform.position;
+        Transform glow = socketTransform.Find(glowEffectName);
+        if (glow != null)
+        {
+            glow.gameObject.SetActive(true);
+        }
+
+        socketTransform.GetComponent<Collider2D>().enabled = false;
+        LevelManager levelManager = Object.FindObjectOfType<LevelManager>();
+        if (levelManager != null)
+        {
+            levelManager.AddCrystal();
+        }
+    }
+
+    private void ShowHeavyWarning()
+    {
+        if (heavyWarningText == null) return;
+
+        heavyWarningText.SetActive(true);
+
+        if (hideWarningCoroutine != null)
+            StopCoroutine(hideWarningCoroutine);
+
+        hideWarningCoroutine = StartCoroutine(HideWarningRoutine());
+    }
+
+    private IEnumerator HideWarningRoutine()
+    {
+        yield return new WaitForSeconds(warningShowTime);
+        if (heavyWarningText != null)
+            heavyWarningText.SetActive(false);
+    }
 }
