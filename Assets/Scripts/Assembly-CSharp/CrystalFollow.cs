@@ -2,66 +2,80 @@ using UnityEngine;
 
 public class CrystalFollow : MonoBehaviour
 {
-	public Vector3 headOffset = new Vector3(0f, 0.5f, 0f);
+    public Vector3 headOffset = new Vector3(0f, 0.5f, 0f);
 
-	private Transform playerHead;
+    public static bool isAnyCrystalFollowing = false;
 
-	private bool isFollowing;
+    private Transform playerHead;
+    private bool isFollowing;
+    private bool isPlaced;
+    private string glowEffectName = "GlowEffect";
 
-	private bool isPlaced;
+    private void Start()
+    {
+        if (!isFollowing && !isPlaced)
+        {
+            isAnyCrystalFollowing = false;
+        }
+    }
 
-	private string glowEffectName = "GlowEffect";
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Player") && !isFollowing && !isPlaced && !isAnyCrystalFollowing)
+        {
+            playerHead = collision.transform.Find("HeadPoint");
+            if (playerHead != null)
+            {
+                isFollowing = true;
+                isAnyCrystalFollowing = true;
 
-	private void OnTriggerEnter2D(Collider2D collision)
-	{
-		if (collision.CompareTag("Player") && !isFollowing && !isPlaced)
-		{
-			playerHead = collision.transform.Find("HeadPoint");
-			if (playerHead != null)
-			{
-				isFollowing = true;
-				GetComponent<Collider2D>().isTrigger = true;
-				Rigidbody2D component = GetComponent<Rigidbody2D>();
-				if (component != null)
-				{
-					component.isKinematic = true;
-				}
-			}
-		}
-		if (collision.CompareTag("Socket") && isFollowing)
-		{
-			PlaceInSocket(collision.transform);
-		}
-	}
+                GetComponent<Collider2D>().isTrigger = true;
+                Rigidbody2D component = GetComponent<Rigidbody2D>();
+                if (component != null)
+                {
+                    component.isKinematic = true;
+                }
+            }
+        }
 
-	private void Update()
-	{
-		if (isFollowing && playerHead != null)
-		{
-			base.transform.position = playerHead.position + headOffset;
-		}
-	}
+        if (collision.CompareTag("Socket") && isFollowing)
+        {
+            PlaceInSocket(collision.transform);
+        }
+    }
 
-	private void PlaceInSocket(Transform socketTransform)
-	{
-		isFollowing = false;
-		isPlaced = true;
-		base.transform.position = socketTransform.position;
-		Transform transform = socketTransform.Find(glowEffectName);
-		if (transform != null)
-		{
-			transform.gameObject.SetActive(value: true);
-		}
-		else
-		{
-			Debug.LogWarning("У формочці '" + socketTransform.name + "' не знайдено об'єкт 'GlowEffect'!");
-		}
-		socketTransform.GetComponent<Collider2D>().enabled = false;
-		LevelManager levelManager = Object.FindObjectOfType<LevelManager>();
-		if (levelManager != null)
-		{
-			levelManager.AddCrystal();
-		}
-		Debug.Log("Кристал встановлено!");
-	}
+    private void Update()
+    {
+        if (isFollowing && playerHead != null)
+        {
+            base.transform.position = playerHead.position + headOffset;
+        }
+    }
+
+    private void PlaceInSocket(Transform socketTransform)
+    {
+        isFollowing = false;
+        isPlaced = true;
+
+        isAnyCrystalFollowing = false;
+
+        base.transform.position = socketTransform.position;
+        Transform transform = socketTransform.Find(glowEffectName);
+        if (transform != null)
+        {
+            transform.gameObject.SetActive(value: true);
+        }
+        else
+        {
+            Debug.LogWarning("У формочці '" + socketTransform.name + "' не знайдено об'єкт 'GlowEffect'!");
+        }
+
+        socketTransform.GetComponent<Collider2D>().enabled = false;
+        LevelManager levelManager = Object.FindObjectOfType<LevelManager>();
+        if (levelManager != null)
+        {
+            levelManager.AddCrystal();
+        }
+        Debug.Log("Кристал встановлено!");
+    }
 }
